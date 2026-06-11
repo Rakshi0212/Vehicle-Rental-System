@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Rental Management Console | DBMS-ad034</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-car-side logo-icon"></i>
+                <div class="logo-text">
+                    <h1>AutoDrive</h1>
+                    <span>DBMS Project ad034</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-tab="dashboard-tab">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </button>
+                <button class="nav-btn" data-tab="customers-tab">
+                    <i class="fa-solid fa-users"></i> Customers
+                </button>
+                <button class="nav-btn" data-tab="vehicles-tab">
+                    <i class="fa-solid fa-car"></i> Fleet Registry
+                </button>
+                <button class="nav-btn" data-tab="bookings-tab">
+                    <i class="fa-solid fa-calendar-check"></i> Bookings & Rentals
+                </button>
+                <button class="nav-btn" data-tab="procedures-tab">
+                    <i class="fa-solid fa-gears"></i> Stored Procedures
+                </button>
+                <button class="nav-btn" data-tab="workbench-tab">
+                    <i class="fa-solid fa-terminal"></i> SQL Workbench
+                </button>
+            </nav>
+            
+            <div class="connection-status-card" id="statusCard">
+                <div class="status-indicator warning" id="statusIndicator"></div>
+                <div class="status-details">
+                    <h3 id="statusTitle">Connecting...</h3>
+                    <p id="statusDesc">Initializing system</p>
+                </div>
+                <button class="config-toggle-btn" onclick="toggleConfigModal()">
+                    <i class="fa-solid fa-sliders"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="content-header">
+                <div class="header-left">
+                    <h2 id="viewTitle">Dashboard Overview</h2>
+                    <p id="viewSubtitle" class="text-secondary">Summary stats and fleet diagnostics</p>
+                </div>
+                <div class="header-right">
+                    <div class="current-time">
+                        <i class="fa-solid fa-clock"></i>
+                        <span id="liveClock">00:00:00 AM</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Warnings Banner for Mock Mode -->
+            <div class="warning-banner hidden" id="mockWarningBanner">
+                <div class="warning-content">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span><strong>Database Warning:</strong> Currently running in <strong>Offline Simulated Mode</strong>. Connection to local MySQL server at localhost failed. Please check if MySQL is running and configure credentials via the configuration slider.</span>
+                </div>
+                <button class="banner-close" onclick="document.getElementById('mockWarningBanner').classList.add('hidden')">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Tab Content Sections -->
+            <div class="tab-content">
+                
+                <!-- 1. DASHBOARD TAB -->
+                <section class="tab-pane active" id="dashboard-tab">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-indigo">
+                                <i class="fa-solid fa-user-tie"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">Total Customers</span>
+                                <h3 class="stat-value" id="statCustomers">-</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bg-purple">
+                                <i class="fa-solid fa-van-shuttle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">Fleet Size</span>
+                                <h3 class="stat-value" id="statVehicles">-</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bg-blue">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">Active Bookings</span>
+                                <h3 class="stat-value" id="statBookings">-</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bg-green">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">Total Rentals Run</span>
+                                <h3 class="stat-value" id="statRentals">-</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-charts-layout">
+                        <!-- Fleet Availability Chart -->
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <h3>Fleet Status Distribution</h3>
+                                <p class="card-subtitle">Generated dynamically via Stored Procedure <code>GetVehicleAvailabilityReport()</code></p>
+                            </div>
+                            <div class="card-body chart-body">
+                                <canvas id="fleetChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- System Triggers Summary -->
+                        <div class="card info-card">
+                            <div class="card-header">
+                                <h3>Automated Constraints & Triggers</h3>
+                                <p class="card-subtitle">Local database integrity settings active</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="trigger-item">
+                                    <div class="trigger-badge after">AFTER INSERT</div>
+                                    <div class="trigger-desc">
+                                        <h4>after_booking_insert</h4>
+                                        <p>Updates a vehicle's status to <code>'Rented'</code> automatically upon creation of a new Booking record.</p>
+                                    </div>
+                                </div>
+                                <div class="trigger-item">
+                                    <div class="trigger-badge before">BEFORE INSERT</div>
+                                    <div class="trigger-desc">
+                                        <h4>before_booking_insert</h4>
+                                        <p>Checks vehicle status. If vehicle is in <code>'Maintenance'</code>, raises a <code>SIGNAL SQLSTATE '45000'</code> error to reject the transaction.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. CUSTOMERS TAB -->
+                <section class="tab-pane" id="customers-tab">
+                    <div class="view-actions-bar">
+                        <button class="btn btn-primary" onclick="openCustomerModal()">
+                            <i class="fa-solid fa-plus"></i> Add New Customer
+                        </button>
+                        <div class="search-wrapper">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" placeholder="Search customers..." id="searchCustomer" onkeyup="filterCustomers()">
+                        </div>
+                    </div>
+
+                    <div class="card table-card">
+                        <div class="table-responsive">
+                            <table class="data-table" id="customersTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Phone Number</th>
+                                        <th>Driver's License</th>
+                                        <th class="actions-header">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated via Javascript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. VEHICLES TAB -->
+                <section class="tab-pane" id="vehicles-tab">
+                    <div class="view-actions-bar">
+                        <button class="btn btn-primary" onclick="openVehicleModal()">
+                            <i class="fa-solid fa-plus"></i> Add New Vehicle
+                        </button>
+                        <div class="search-wrapper">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" placeholder="Search vehicle model..." id="searchVehicle" onkeyup="filterVehicles()">
+                        </div>
+                    </div>
+
+                    <div class="card table-card">
+                        <div class="table-responsive">
+                            <table class="data-table" id="vehiclesTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Vehicle Model</th>
+                                        <th>Category Type</th>
+                                        <th>Rental Charge/Day</th>
+                                        <th>Current Status</th>
+                                        <th class="actions-header">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated via Javascript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. BOOKINGS & RENTALS TAB -->
+                <section class="tab-pane" id="bookings-tab">
+                    <div class="booking-split-layout">
+                        <!-- Create Booking Form -->
+                        <div class="card booking-form-card">
+                            <div class="card-header">
+                                <h3>Insert Booking Transaction</h3>
+                                <p class="card-subtitle">Creates Booking &amp; Rental records instantly. Triggers will execute.</p>
+                            </div>
+                            <div class="card-body">
+                                <form id="bookingForm" onsubmit="createBooking(event)">
+                                    <div class="form-group">
+                                        <label for="bookingCustomer">Select Customer</label>
+                                        <select id="bookingCustomer" required>
+                                            <option value="" disabled selected>Choose a customer...</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bookingVehicle">Select Vehicle</label>
+                                        <select id="bookingVehicle" required>
+                                            <option value="" disabled selected>Choose a vehicle...</option>
+                                        </select>
+                                        <small class="form-hint">Tip: Selecting a vehicle under 'Maintenance' status will trigger the <b>before_booking_insert</b> prevention trigger.</small>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="bookingStartDate">Rental Start Date</label>
+                                            <input type="date" id="bookingStartDate" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="bookingEndDate">Rental End Date</label>
+                                            <input type="date" id="bookingEndDate" required>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-block">Confirm Booking &amp; Auto-Rent</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Active Bookings & Rentals List -->
+                        <div class="card rentals-list-card">
+                            <div class="card-header">
+                                <h3>Active Rental Transactions</h3>
+                                <p class="card-subtitle">Overview of rentals, durations, and billing totals</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="data-table" id="rentalsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Rental ID</th>
+                                                <th>Customer</th>
+                                                <th>Vehicle Model</th>
+                                                <th>Start Date</th>
+                                                <th>End Date</th>
+                                                <th>Total Charge</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Populated via Javascript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. STORED PROCEDURES TAB -->
+                <section class="tab-pane" id="procedures-tab">
+                    <div class="procedure-grid">
+                        
+                        <!-- Procedure 1: Calculate Rental Charge -->
+                        <div class="card proc-card">
+                            <div class="card-header">
+                                <div class="proc-header-title">
+                                    <i class="fa-solid fa-calculator"></i>
+                                    <h3>Calculate Rental Charge</h3>
+                                </div>
+                                <span class="proc-badge">PROCEDURE</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="proc-desc">
+                                    Calculates the total rental cost dynamically based on the rental duration (dates) and the vehicle's daily fee, then updates the database.
+                                </p>
+                                <div class="code-snippet-box">
+                                    <pre><code>CALL CalculateRentalCharge(rental_id, @out_total);</code></pre>
+                                </div>
+                                
+                                <form id="calcProcedureForm" onsubmit="runCalculateProcedure(event)">
+                                    <div class="form-group">
+                                        <label for="procRentalId">Select Rental Record</label>
+                                        <select id="procRentalId" required>
+                                            <option value="" disabled selected>Choose a rental...</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-purple btn-block">Execute Stored Procedure</button>
+                                </form>
+                                
+                                <div class="proc-result-box hidden" id="calcResultBox">
+                                    <h4>Procedure Output:</h4>
+                                    <div class="result-value-row">
+                                        <span>Total Amount Calculated:</span>
+                                        <strong id="calcOutputValue">$0.00</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Procedure 2: Get Vehicle Availability Report -->
+                        <div class="card proc-card">
+                            <div class="card-header">
+                                <div class="proc-header-title">
+                                    <i class="fa-solid fa-chart-column"></i>
+                                    <h3>Get Vehicle Availability Report</h3>
+                                </div>
+                                <span class="proc-badge">PROCEDURE</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="proc-desc">
+                                    Queries the database to gather summary stats of the fleet, counting how many vehicles are currently <b>Available</b>, <b>Rented</b>, or under <b>Maintenance</b>.
+                                </p>
+                                <div class="code-snippet-box">
+                                    <pre><code>CALL GetVehicleAvailabilityReport();</code></pre>
+                                </div>
+                                
+                                <button class="btn btn-purple btn-block" onclick="runAvailabilityReportProcedure()">
+                                    Retrieve Availability Summary Report
+                                </button>
+                                
+                                <div class="proc-result-box hidden" id="reportResultBox">
+                                    <h4>Procedure Output Records:</h4>
+                                    <table class="report-table" id="reportResultTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Vehicle Status</th>
+                                                <th>Count</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Dynamically filled -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- 6. SQL WORKBENCH TAB -->
+                <section class="tab-pane" id="workbench-tab">
+                    <div class="workbench-layout">
+                        <!-- Query Selector Sidebar -->
+                        <div class="card query-selector-card">
+                            <div class="card-header">
+                                <h3>Predefined Queries</h3>
+                                <p class="card-subtitle">Select a target query to review &amp; run</p>
+                            </div>
+                            <div class="card-body query-links-list">
+                                <button class="query-link-btn" onclick="selectPredefinedQuery(1)">
+                                    <span>1. Retrieve all vehicles</span>
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button class="query-link-btn" onclick="selectPredefinedQuery(2)">
+                                    <span>2. Display vehicles available for rent</span>
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button class="query-link-btn" onclick="selectPredefinedQuery(3)">
+                                    <span>3. Rental and customer details (2-table Join)</span>
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button class="query-link-btn" onclick="selectPredefinedQuery(4)">
+                                    <span>4. Rental, customer, and vehicle (3-table Join)</span>
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button class="query-link-btn" onclick="selectPredefinedQuery(5)">
+                                    <span>5. Rentals count per vehicle type (Group By)</span>
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button class="query-link-btn" onclick="selectPredefinedQuery(6)">
+                                    <span>6. Vehicle types with > 15 rentals (Having)</span>
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button class="query-link-btn" onclick="selectPredefinedQuery(7)">
+                                    <span>7. Vehicles priced > average price (Subquery)</span>
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button class="query-link-btn" onclick="selectPredefinedQuery(8)">
+                                    <span>8. Customers with more rentals than customer 2</span>
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button class="query-link-btn" onclick="selectPredefinedQuery(9)">
+                                    <span>9. All vehicles including unrented (Left Join)</span>
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button class="query-link-btn" onclick="selectPredefinedQuery(10)">
+                                    <span>10. Vehicles never rented (Not Exists)</span>
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- SQL Console and Results -->
+                        <div class="workbench-main">
+                            <div class="card sql-console-card">
+                                <div class="card-header console-header">
+                                    <div class="header-desc">
+                                        <h3>SQL Command Terminal</h3>
+                                        <p class="card-subtitle">Review, edit, and fire query statements directly</p>
+                                    </div>
+                                    <button class="btn btn-green" onclick="executeCurrentQuery()">
+                                        <i class="fa-solid fa-play"></i> Run Query
+                                    </button>
+                                </div>
+                                <div class="card-body console-body">
+                                    <textarea id="sqlQueryText" placeholder="Write custom SQL here or select a predefined query from the list..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="card query-results-card">
+                                <div class="card-header">
+                                    <h3>Query Output Console</h3>
+                                    <p class="card-subtitle">Results set returned from SQL Engine</p>
+                                </div>
+                                <div class="card-body results-body" id="queryResultContainer">
+                                    <div class="empty-results-prompt">
+                                        <i class="fa-solid fa-code"></i>
+                                        <p>Select and run a query to display records here</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ----------------- MODALS ----------------- -->
+
+    <!-- Customer Form Modal (Add/Edit) -->
+    <div id="customerModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h3 id="customerModalTitle">Add Customer</h3>
+                <button class="modal-close-btn" onclick="closeCustomerModal()">&times;</button>
+            </div>
+            <form id="customerForm" onsubmit="submitCustomerForm(event)">
+                <input type="hidden" id="custFormId">
+                <div class="form-group">
+                    <label for="custFormName">Full Name</label>
+                    <input type="text" id="custFormName" required placeholder="e.g. Rakshitha Shetty">
+                </div>
+                <div class="form-group">
+                    <label for="custFormPhone">Phone Number</label>
+                    <input type="tel" id="custFormPhone" required placeholder="e.g. 9876543210">
+                </div>
+                <div class="form-group">
+                    <label for="custFormLicense">Driver's License Number</label>
+                    <input type="text" id="custFormLicense" required placeholder="e.g. DL-5523910">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeCustomerModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vehicle Form Modal (Add/Edit) -->
+    <div id="vehicleModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h3 id="vehicleModalTitle">Add Vehicle</h3>
+                <button class="modal-close-btn" onclick="closeVehicleModal()">&times;</button>
+            </div>
+            <form id="vehicleForm" onsubmit="submitVehicleForm(event)">
+                <input type="hidden" id="vehFormId">
+                <div class="form-group">
+                    <label for="vehFormModel">Vehicle Model</label>
+                    <input type="text" id="vehFormModel" required placeholder="e.g. Toyota Camry">
+                </div>
+                <div class="form-group">
+                    <label for="vehFormType">Vehicle Category Type</label>
+                    <select id="vehFormType" required>
+                        <option value="" disabled selected>Select category...</option>
+                        <option value="Sedan">Sedan</option>
+                        <option value="SUV">SUV</option>
+                        <option value="Truck">Truck</option>
+                        <option value="Motorcycle">Motorcycle</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="vehFormPrice">Rental Price Per Day ($)</label>
+                    <input type="number" step="0.01" min="1.00" id="vehFormPrice" required placeholder="e.g. 50.00">
+                </div>
+                <div class="form-group">
+                    <label for="vehFormStatus">Current Status</label>
+                    <select id="vehFormStatus" required>
+                        <option value="Available">Available</option>
+                        <option value="Rented">Rented</option>
+                        <option value="Maintenance">Maintenance</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeVehicleModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Vehicle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Database Connection Slider Modal -->
+    <div id="configModal" class="modal">
+        <div class="modal-content glass config-modal">
+            <div class="modal-header">
+                <h3>MySQL Database Configurations</h3>
+                <button class="modal-close-btn" onclick="toggleConfigModal()">&times;</button>
+            </div>
+            <form id="configForm" onsubmit="updateDbConfig(event)">
+                <div class="form-group">
+                    <label for="cfgHost">Host Address</label>
+                    <input type="text" id="cfgHost" required value="localhost">
+                </div>
+                <div class="form-group">
+                    <label for="cfgUser">Database User</label>
+                    <input type="text" id="cfgUser" required value="root">
+                </div>
+                <div class="form-group">
+                    <label for="cfgPassword">MySQL User Password</label>
+                    <input type="password" id="cfgPassword" placeholder="Enter password (leave empty if none)">
+                </div>
+                <div class="form-group">
+                    <label for="cfgDatabase">Database Name</label>
+                    <input type="text" id="cfgDatabase" required value="vehicle_rental_db">
+                </div>
+                <div class="form-group">
+                    <label for="cfgPort">Port Number</label>
+                    <input type="number" id="cfgPort" required value="3306">
+                </div>
+                <div class="config-modal-note">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Updating these configs will trigger a live connection attempt. If it fails, the server remains in Offline Simulated mode.</span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="toggleConfigModal()">Cancel</button>
+                    <button type="submit" class="btn btn-green">Connect Database</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script loading -->
+    <script src="app.js"></script>
+</body>
+</html>
