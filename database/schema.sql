@@ -50,7 +50,8 @@ CREATE TABLE Rental (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     total_amount DECIMAL(10, 2) DEFAULT 0.00,
-    FOREIGN KEY (booking_id) REFERENCES Booking(booking_id) ON DELETE CASCADE
+    FOREIGN KEY (booking_id) REFERENCES Booking(booking_id) ON DELETE CASCADE,
+    CONSTRAINT chk_rental_dates CHECK (end_date > start_date)
 );
 
 -- 5. Payment Table

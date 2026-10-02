@@ -1,0 +1,13 @@
+{
+  "name": "dbms-ad034-project",
+  "version": "1.0.0",
+  "description": "An all-in-one digital platform for managing vehicle rentals. Think of it as a virtual garage and reservation desk combined! It helps rental businesses track customers, manage their fleet of vehicles, handle bookings, process payments, and track vehicle maintenance.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

@@ -17,6 +17,7 @@ let availabilityChart = null;
 document.addEventListener('DOMContentLoaded', () => {
     initClock();
     initTabs();
+    initDateConstraints();
     checkDbConnection();
     loadAllData();
 });
@@ -28,6 +29,37 @@ function initClock() {
         const now = new Date();
         clockEl.textContent = now.toLocaleTimeString();
     }, 1000);
+}
+
+// Initialize calendar date constraints for booking form
+function initDateConstraints() {
+    const today = new Date().toISOString().split('T')[0];
+    const startInput = document.getElementById('bookingStartDate');
+    const endInput = document.getElementById('bookingEndDate');
+    if (!startInput || !endInput) return;
+
+    // Start date: minimum is today
+    startInput.min = today;
+    startInput.value = today;
+
+    // End date: minimum is tomorrow by default
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    endInput.min = tomorrowStr;
+    endInput.value = tomorrowStr;
+
+    // When start date changes, push end date min to day after start
+    startInput.addEventListener('change', () => {
+        const newStart = new Date(startInput.value + 'T00:00:00');
+        newStart.setDate(newStart.getDate() + 1);
+        const newMinEnd = newStart.toISOString().split('T')[0];
+        endInput.min = newMinEnd;
+        // If the currently selected end date is no longer valid, bump it
+        if (!endInput.value || endInput.value <= startInput.value) {
+            endInput.value = newMinEnd;
+        }
+    });
 }
 
 // Tab navigation handler
@@ -102,24 +134,32 @@ async function checkDbConnection() {
 
 // Fetch all database records
 async function loadAllData() {
-    try {
-        await Promise.all([
-            fetchCustomers(),
-            fetchVehicles(),
-            fetchRentals()
-        ]);
-        updateDashboardStats();
-        populateDropdowns();
-        renderCharts();
-    } catch (err) {
-        console.error('Error loading data:', err);
-    }
+    await Promise.allSettled([
+        fetchCustomers(),
+        fetchVehicles(),
+        fetchRentals()
+    ]);
+    updateDashboardStats();
+    populateDropdowns();
+    renderCharts();
 }
 
 // ----------------- CUSTOMER API CALLS & CRUD -----------------
 async function fetchCustomers() {
-    const res = await fetch(`${API_BASE}/customers`);
-    customers = await res.json();
+    try {
+        const res = await fetch(`${API_BASE}/customers`);
+        const data = await res.json();
+        if (!res.ok) {
+            showSystemAlert(data.error || 'Failed to fetch customer data.', 'warning');
+            customers = [];
+        } else {
+            customers = Array.isArray(data) ? data : [];
+        }
+    } catch (err) {
+        console.error('Error fetching customers:', err);
+        showSystemAlert('Unable to load customers. Check backend connection.', 'danger');
+        customers = [];
+    }
     renderCustomersTable();
 }
 
@@ -127,33 +167,34 @@ function renderCustomersTable() {
     const tbody = document.querySelector('#customersTable tbody');
     tbody.innerHTML = '';
     
-    customers.forEach(c => {
+    customers.forEach((c, index) => {
         const tr = document.createElement('tr');
+        const displayId = c.customer_id !== undefined ? c.customer_id : (index + 1);
         tr.innerHTML = `
-            <td>${c.customer_id}</td>
+            <td><strong>#${displayId}</strong></td>
             <td><strong>${escapeHtml(c.name)}</strong></td>
             <td>${escapeHtml(c.phone)}</td>
             <td><code class="code-license">${escapeHtml(c.license_number)}</code></td>
             <td class="actions-cell">
-                <button class="btn-icon-edit" onclick="openCustomerModal(${c.customer_id})" title="Edit"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn-icon-delete" onclick="deleteCustomer(${c.customer_id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn-icon-edit" onclick="openCustomerModal('${escapeHtml(c.license_number)}')" title="Edit"><i class="fa-solid fa-pencil"></i></button>
+                <button class="btn-icon-delete" onclick="deleteCustomer('${escapeHtml(c.license_number)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-function openCustomerModal(id = null) {
+function openCustomerModal(licenseNum = null) {
     const modal = document.getElementById('customerModal');
     const title = document.getElementById('customerModalTitle');
     const form = document.getElementById('customerForm');
     
     form.reset();
-    document.getElementById('custFormId').value = id || '';
+    document.getElementById('custFormId').value = licenseNum || '';
     
-    if (id) {
+    if (licenseNum) {
         title.textContent = 'Edit Customer Profile';
-        const c = customers.find(item => item.customer_id === id);
+        const c = customers.find(item => item.license_number === licenseNum);
         if (c) {
             document.getElementById('custFormName').value = c.name;
             document.getElementById('custFormPhone').value = c.phone;
@@ -229,8 +270,20 @@ function filterCustomers() {
 
 // ----------------- VEHICLE API CALLS & CRUD -----------------
 async function fetchVehicles() {
-    const res = await fetch(`${API_BASE}/vehicles`);
-    vehicles = await res.json();
+    try {
+        const res = await fetch(`${API_BASE}/vehicles`);
+        const data = await res.json();
+        if (!res.ok) {
+            showSystemAlert(data.error || 'Failed to fetch vehicle data.', 'warning');
+            vehicles = [];
+        } else {
+            vehicles = Array.isArray(data) ? data : [];
+        }
+    } catch (err) {
+        console.error('Error fetching vehicles:', err);
+        showSystemAlert('Unable to load vehicles. Check backend connection.', 'danger');
+        vehicles = [];
+    }
     renderVehiclesTable();
 }
 
@@ -344,8 +397,20 @@ function filterVehicles() {
 
 // ----------------- RENTALS & BOOKINGS API CALLS -----------------
 async function fetchRentals() {
-    const res = await fetch(`${API_BASE}/rentals`);
-    rentals = await res.json();
+    try {
+        const res = await fetch(`${API_BASE}/rentals`);
+        const data = await res.json();
+        if (!res.ok) {
+            showSystemAlert(data.error || 'Failed to fetch rental data.', 'warning');
+            rentals = [];
+        } else {
+            rentals = Array.isArray(data) ? data : [];
+        }
+    } catch (err) {
+        console.error('Error fetching rentals:', err);
+        showSystemAlert('Unable to load rentals. Check backend connection.', 'danger');
+        rentals = [];
+    }
     renderRentalsTable();
 }
 
@@ -364,19 +429,54 @@ function renderRentalsTable() {
             <td class="total-amount-col">
                 <strong>$${parseFloat(r.total_amount).toFixed(2)}</strong>
             </td>
+            <td class="actions-cell">
+                <button class="btn-icon-delete" onclick="cancelBooking(${r.booking_id})" title="Cancel Booking"><i class="fa-solid fa-ban"></i></button>
+            </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
+async function cancelBooking(bookingId) {
+    if (!confirm('Are you sure you want to cancel this booking? This will remove the booking and rental records and release the vehicle.')) return;
+    try {
+        const res = await fetch(`${API_BASE}/bookings/${bookingId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (res.ok) {
+            showSystemAlert(data.message || 'Booking cancelled successfully!', 'success');
+            loadAllData();
+        } else {
+            showSystemAlert(data.error || 'Failed to cancel booking.', 'danger');
+        }
+    } catch (err) {
+        showSystemAlert('Error sending cancellation request.', 'danger');
+    }
+}
+
+
 async function createBooking(e) {
     e.preventDefault();
-    const customer_id = document.getElementById('bookingCustomer').value;
+    const customer_license = document.getElementById('bookingCustomer').value;
     const vehicle_id = document.getElementById('bookingVehicle').value;
     const start_date = document.getElementById('bookingStartDate').value;
     const end_date = document.getElementById('bookingEndDate').value;
+
+    // Client-side date validation
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDt = new Date(start_date + 'T00:00:00');
+    const endDt = new Date(end_date + 'T00:00:00');
+
+    if (startDt < today) {
+        showSystemAlert('Start date cannot be before today!', 'danger');
+        return;
+    }
+    if (endDt <= startDt) {
+        showSystemAlert('End date must be strictly after the start date!', 'danger');
+        return;
+    }
     
-    const payload = { customer_id, vehicle_id, start_date, end_date };
+    const payload = { customer_license, vehicle_id, start_date, end_date };
     
     try {
         const res = await fetch(`${API_BASE}/bookings`, {
@@ -414,8 +514,8 @@ function populateDropdowns() {
     custDropdown.innerHTML = '<option value="" disabled selected>Choose a customer...</option>';
     customers.forEach(c => {
         const opt = document.createElement('option');
-        opt.value = c.customer_id;
-        opt.textContent = `${c.name} (ID: ${c.customer_id})`;
+        opt.value = c.license_number;
+        opt.textContent = `${c.name} (${c.license_number})`;
         custDropdown.appendChild(opt);
     });
     custDropdown.value = prevCust || '';
@@ -663,11 +763,18 @@ async function renderCharts() {
     try {
         const res = await fetch(`${API_BASE}/procedures/availability-report`);
         const report = await res.json();
+        if (!res.ok || !Array.isArray(report) || report.length === 0) {
+            console.warn('Availability report did not return chart data', report);
+            if (report && report.error) {
+                showSystemAlert(report.error, 'warning');
+            }
+            return;
+        }
         
         const labels = report.map(r => r.status);
         const counts = report.map(r => r.vehicle_count);
         
-        // Destruct existing chart to redraw
+        // Destroy existing chart to redraw
         if (availabilityChart) {
             availabilityChart.destroy();
         }

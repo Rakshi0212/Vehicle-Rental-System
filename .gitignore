@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+venv/
+env/
+ENV/
+
+# MySQL data directory, binary files & keys
+mysql_data/
+*.pid
+*.pem
+*.dblwr
+*.ibd
+
+# IDE & Editor settings
+.vscode/
+*.code-workspace
+
+# Node dependencies
+node_modules/
+package-lock.json
+*-lock.json
+
+# Scratch / temporary files
+scratch/
+scratch_test_conn.py

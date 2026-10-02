@@ -3,7 +3,7 @@ from flask_cors import CORS
 import mysql.connector
 from mysql.connector import Error
 import os
-from datetime import datetime
+from datetime import datetime, date
 
 app = Flask(__name__, static_folder='../frontend')
 CORS(app)
@@ -13,7 +13,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': 'RK!02006',  # Configured user password
-    'database': 'vehicle_rental_db',
+    'database': 'vehicle_rental_system',
     'port': 3306
 }
 
@@ -22,11 +22,11 @@ is_mock_mode = False
 # Fallback Mock Database (In-Memory)
 mock_db = {
     'customers': [
-        { 'customer_id': 1, 'name': 'Rakshitha Shetty', 'phone': '9876543210', 'license_number': 'DL-5523910' },
-        { 'customer_id': 2, 'name': 'John Doe', 'phone': '9887766554', 'license_number': 'DL-8827394' },
-        { 'customer_id': 3, 'name': 'Alice Smith', 'phone': '9123456789', 'license_number': 'DL-1192834' },
-        { 'customer_id': 4, 'name': 'Bob Johnson', 'phone': '9445566778', 'license_number': 'DL-4483920' },
-        { 'customer_id': 5, 'name': 'Carol White', 'phone': '9556677889', 'license_number': 'DL-6672839' }
+        { 'license_number': 'DL-5523910', 'name': 'Rakshitha', 'phone': '9876543210' },
+        { 'license_number': 'DL-8827394', 'name': 'John Doe', 'phone': '9887766554' },
+        { 'license_number': 'DL-1192834', 'name': 'Alice Smith', 'phone': '9123456789' },
+        { 'license_number': 'DL-4483920', 'name': 'Bob Johnson', 'phone': '9445566778' },
+        { 'license_number': 'DL-6672839', 'name': 'Carol White', 'phone': '9556677889' }
     ],
     'vehicles': [
         { 'vehicle_id': 1, 'model': 'Toyota Camry', 'type': 'Sedan', 'rental_price_per_day': 50.00, 'status': 'Available' },
@@ -59,46 +59,46 @@ def seed_mock_data():
     
     # 16 Sedan rentals (required to satisfy HAVING > 15 count query)
     sedan_bookings = [
-        (1, 1, '2026-05-01', '2026-05-01', '2026-05-03', 100.00),
-        (2, 1, '2026-05-03', '2026-05-03', '2026-05-06', 150.00),
-        (3, 1, '2026-05-05', '2026-05-05', '2026-05-06', 50.00),
-        (4, 1, '2026-05-07', '2026-05-07', '2026-05-10', 150.00),
-        (5, 2, '2026-05-02', '2026-05-02', '2026-05-04', 90.00),
-        (1, 2, '2026-05-04', '2026-05-04', '2026-05-07', 135.00),
-        (2, 2, '2026-05-06', '2026-05-06', '2026-05-07', 45.00),
-        (3, 2, '2026-05-08', '2026-05-08', '2026-05-12', 180.00),
-        (4, 5, '2026-05-10', '2026-05-10', '2026-05-11', 90.00),
-        (5, 5, '2026-05-12', '2026-05-12', '2026-05-15', 270.00),
-        (1, 5, '2026-05-14', '2026-05-14', '2026-05-15', 90.00),
-        (2, 5, '2026-05-16', '2026-05-16', '2026-05-20', 360.00),
-        (3, 8, '2026-05-11', '2026-05-11', '2026-05-13', 150.00),
-        (4, 8, '2026-05-13', '2026-05-13', '2026-05-16', 225.00),
-        (5, 8, '2026-05-15', '2026-05-15', '2026-05-16', 75.00),
-        (1, 8, '2026-05-17', '2026-05-17', '2026-05-22', 375.00)
+        ('DL-5523910', 1, '2026-05-01', '2026-05-01', '2026-05-03', 100.00),
+        ('DL-8827394', 1, '2026-05-03', '2026-05-03', '2026-05-06', 150.00),
+        ('DL-1192834', 1, '2026-05-05', '2026-05-05', '2026-05-06', 50.00),
+        ('DL-4483920', 1, '2026-05-07', '2026-05-07', '2026-05-10', 150.00),
+        ('DL-6672839', 2, '2026-05-02', '2026-05-02', '2026-05-04', 90.00),
+        ('DL-5523910', 2, '2026-05-04', '2026-05-04', '2026-05-07', 135.00),
+        ('DL-8827394', 2, '2026-05-06', '2026-05-06', '2026-05-07', 45.00),
+        ('DL-1192834', 2, '2026-05-08', '2026-05-08', '2026-05-12', 180.00),
+        ('DL-4483920', 5, '2026-05-10', '2026-05-10', '2026-05-11', 90.00),
+        ('DL-6672839', 5, '2026-05-12', '2026-05-12', '2026-05-15', 270.00),
+        ('DL-5523910', 5, '2026-05-14', '2026-05-14', '2026-05-15', 90.00),
+        ('DL-8827394', 5, '2026-05-16', '2026-05-16', '2026-05-20', 360.00),
+        ('DL-1192834', 8, '2026-05-11', '2026-05-11', '2026-05-13', 150.00),
+        ('DL-4483920', 8, '2026-05-13', '2026-05-13', '2026-05-16', 225.00),
+        ('DL-6672839', 8, '2026-05-15', '2026-05-15', '2026-05-16', 75.00),
+        ('DL-5523910', 8, '2026-05-17', '2026-05-17', '2026-05-22', 375.00)
     ]
     
     for cust, veh, bk_date, start, end, amt in sedan_bookings:
-        mock_db['bookings'].append({ 'booking_id': booking_id_count, 'customer_id': cust, 'vehicle_id': veh, 'booking_date': bk_date })
+        mock_db['bookings'].append({ 'booking_id': booking_id_count, 'customer_license': cust, 'vehicle_id': veh, 'booking_date': bk_date })
         mock_db['rentals'].append({ 'rental_id': rental_id_count, 'booking_id': booking_id_count, 'start_date': start, 'end_date': end, 'total_amount': amt })
         booking_id_count += 1
         rental_id_count += 1
 
     # 4 SUV rentals
     suv_bookings = [
-        (2, 3, '2026-05-20', '2026-05-20', '2026-05-23', 240.00),
-        (3, 3, '2026-05-22', '2026-05-22', '2026-05-24', 160.00),
-        (4, 6, '2026-05-24', '2026-05-24', '2026-05-26', 170.00),
-        (5, 6, '2026-05-26', '2026-05-26', '2026-05-30', 340.00)
+        ('DL-8827394', 3, '2026-05-20', '2026-05-20', '2026-05-23', 240.00),
+        ('DL-1192834', 3, '2026-05-22', '2026-05-22', '2026-05-24', 160.00),
+        ('DL-4483920', 6, '2026-05-24', '2026-05-24', '2026-05-26', 170.00),
+        ('DL-6672839', 6, '2026-05-26', '2026-05-26', '2026-05-30', 340.00)
     ]
     
     for cust, veh, bk_date, start, end, amt in suv_bookings:
-        mock_db['bookings'].append({ 'booking_id': booking_id_count, 'customer_id': cust, 'vehicle_id': veh, 'booking_date': bk_date })
+        mock_db['bookings'].append({ 'booking_id': booking_id_count, 'customer_license': cust, 'vehicle_id': veh, 'booking_date': bk_date })
         mock_db['rentals'].append({ 'rental_id': rental_id_count, 'booking_id': booking_id_count, 'start_date': start, 'end_date': end, 'total_amount': amt })
         booking_id_count += 1
         rental_id_count += 1
 
     # 1 Truck rental
-    mock_db['bookings'].append({ 'booking_id': booking_id_count, 'customer_id': 1, 'vehicle_id': 9, 'booking_date': '2026-05-28' })
+    mock_db['bookings'].append({ 'booking_id': booking_id_count, 'customer_license': 'DL-5523910', 'vehicle_id': 9, 'booking_date': '2026-05-28' })
     mock_db['rentals'].append({ 'rental_id': rental_id_count, 'booking_id': booking_id_count, 'start_date': '2026-05-28', 'end_date': '2026-05-30', 'total_amount': 140.00 })
     booking_id_count += 1
     rental_id_count += 1
@@ -200,7 +200,7 @@ def run_mock_query(query, params):
         results = []
         for r in mock_db['rentals']:
             bk = next((b for b in mock_db['bookings'] if b['booking_id'] == r['booking_id']), None)
-            cust = next((c for c in mock_db['customers'] if c['customer_id'] == bk['customer_id']), None) if bk else None
+            cust = next((c for c in mock_db['customers'] if c['license_number'] == bk['customer_license']), None) if bk else None
             if cust:
                 results.append({
                     'rental_id': r['rental_id'],
@@ -217,7 +217,7 @@ def run_mock_query(query, params):
         results = []
         for r in mock_db['rentals']:
             bk = next((b for b in mock_db['bookings'] if b['booking_id'] == r['booking_id']), None)
-            cust = next((c for c in mock_db['customers'] if c['customer_id'] == bk['customer_id']), None) if bk else None
+            cust = next((c for c in mock_db['customers'] if c['license_number'] == bk['customer_license']), None) if bk else None
             veh = next((v for v in mock_db['vehicles'] if v['vehicle_id'] == bk['vehicle_id']), None) if bk else None
             if cust and veh:
                 results.append({
@@ -257,15 +257,15 @@ def run_mock_query(query, params):
         return [v for v in mock_db['vehicles'] if v['rental_price_per_day'] > avg_price]
 
     # Query 8: Correlated Subquery (Customers who rented more than customer 2)
-    elif "customer_id = 2" in q:
-        # Count bookings for customer_id = 2
-        cust2_bookings = sum(1 for b in mock_db['bookings'] if b['customer_id'] == 2)
+    elif "customer_license = 'dl-8827394'" in q or "customer_license ='dl-8827394'" in q:
+        # Count bookings for customer_license = 'DL-8827394'
+        cust2_bookings = sum(1 for b in mock_db['bookings'] if b['customer_license'] == 'DL-8827394')
         results = []
         for c in mock_db['customers']:
-            c_bookings = sum(1 for b in mock_db['bookings'] if b['customer_id'] == c['customer_id'])
+            c_bookings = sum(1 for b in mock_db['bookings'] if b['customer_license'] == c['license_number'])
             if c_bookings > cust2_bookings:
                 results.append({
-                    'customer_id': c['customer_id'],
+                    'license_number': c['license_number'],
                     'name': c['name'],
                     'booking_count': c_bookings
                 })
@@ -398,79 +398,97 @@ def manage_customers():
             
     elif request.method == 'POST':
         data = request.json
-        name = data.get('name')
-        phone = data.get('phone')
-        license_number = data.get('license_number')
+        name = (data.get('name') or '').strip()
+        phone = (data.get('phone') or '').strip()
+        license_number = (data.get('license_number') or '').strip()
         
         if not name or not phone or not license_number:
             return jsonify({"error": "Missing required fields"}), 400
             
         if conn:
             try:
-                cursor = conn.cursor()
+                cursor = conn.cursor(dictionary=True, buffered=True)
+                # Check for existing license number to prevent duplicates
+                cursor.execute("SELECT customer_id, name FROM Customer WHERE license_number = %s", (license_number,))
+                existing = cursor.fetchone()
+                if existing:
+                    cursor.close()
+                    conn.close()
+                    return jsonify({"error": f"A customer ({existing.get('name', 'Unknown')}) with license number '{license_number}' already exists!"}), 400
+
                 cursor.execute(
                     "INSERT INTO Customer (name, phone, license_number) VALUES (%s, %s, %s)",
                     (name, phone, license_number)
                 )
                 conn.commit()
-                new_id = cursor.lastrowid
                 cursor.close()
                 conn.close()
-                return jsonify({"message": "Customer added successfully!", "customer_id": new_id}), 201
+                return jsonify({"message": "Customer added successfully!", "license_number": license_number}), 201
             except Error as e:
+                if "Duplicate entry" in str(e) or getattr(e, 'errno', None) == 1062:
+                    return jsonify({"error": f"A customer with license number '{license_number}' already exists!"}), 400
                 return jsonify({"error": str(e)}), 500
         else:
             # Check unique license
-            if any(c['license_number'] == license_number for c in mock_db['customers']):
-                return jsonify({"error": "Error: Duplicate entry for license number!"}), 400
-            new_id = max([c['customer_id'] for c in mock_db['customers']], default=0) + 1
-            new_cust = { "customer_id": new_id, "name": name, "phone": phone, "license_number": license_number }
+            if any(c['license_number'].lower() == license_number.lower() for c in mock_db['customers']):
+                return jsonify({"error": f"A customer with license number '{license_number}' already exists!"}), 400
+            new_cust = { "name": name, "phone": phone, "license_number": license_number }
             mock_db['customers'].append(new_cust)
-            return jsonify({"message": "Customer added successfully (Mock Mode)!", "customer_id": new_id}), 201
+            return jsonify({"message": "Customer added successfully (Mock Mode)!", "license_number": license_number}), 201
 
-@app.route('/api/customers/<int:id>', methods=['PUT', 'DELETE'])
-def detail_customer(id):
+@app.route('/api/customers/<string:license_number>', methods=['PUT', 'DELETE'])
+def detail_customer(license_number):
     global mock_db
     conn = get_db_connection()
     
     if request.method == 'PUT':
         data = request.json
-        name = data.get('name')
-        phone = data.get('phone')
-        license_number = data.get('license_number')
+        name = (data.get('name') or '').strip()
+        phone = (data.get('phone') or '').strip()
+        new_license = (data.get('license_number') or license_number).strip()
         
         if conn:
             try:
-                cursor = conn.cursor()
+                cursor = conn.cursor(buffered=True)
+                # If license number changed, check that new license is not already taken
+                if new_license.lower() != license_number.lower():
+                    cursor.execute("SELECT customer_id FROM Customer WHERE license_number = %s", (new_license,))
+                    if cursor.fetchone():
+                        cursor.close()
+                        conn.close()
+                        return jsonify({"error": f"License number '{new_license}' is already in use by another customer!"}), 400
+
                 cursor.execute(
-                    "UPDATE Customer SET name = %s, phone = %s, license_number = %s WHERE customer_id = %s",
-                    (name, phone, license_number, id)
+                    "UPDATE Customer SET name = %s, phone = %s, license_number = %s WHERE license_number = %s",
+                    (name, phone, new_license, license_number)
                 )
                 conn.commit()
                 cursor.close()
                 conn.close()
                 return jsonify({"message": "Customer updated successfully!"})
             except Error as e:
+                if "Duplicate entry" in str(e) or getattr(e, 'errno', None) == 1062:
+                    return jsonify({"error": f"License number '{new_license}' is already in use by another customer!"}), 400
                 return jsonify({"error": str(e)}), 500
         else:
-            cust = next((c for c in mock_db['customers'] if c['customer_id'] == id), None)
+            cust = next((c for c in mock_db['customers'] if c['license_number'].lower() == license_number.lower()), None)
             if not cust:
                 return jsonify({"error": "Customer not found"}), 404
             
             # Check license uniqueness excluding current record
-            if any(c['license_number'] == license_number and c['customer_id'] != id for c in mock_db['customers']):
-                return jsonify({"error": "Error: License number must be unique!"}), 400
+            if any(c['license_number'].lower() == new_license.lower() and c['license_number'].lower() != license_number.lower() for c in mock_db['customers']):
+                return jsonify({"error": f"License number '{new_license}' is already in use by another customer!"}), 400
                 
             cust['name'] = name
             cust['phone'] = phone
-            cust['license_number'] = license_number
+            cust['license_number'] = new_license
             return jsonify({"message": "Customer updated successfully (Mock Mode)!"})
             
     elif request.method == 'DELETE':
         if conn:
             try:
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM Customer WHERE customer_id = %s", (id,))
+                cursor.execute("DELETE FROM Customer WHERE license_number = %s", (license_number,))
                 conn.commit()
                 cursor.close()
                 conn.close()
@@ -478,12 +496,12 @@ def detail_customer(id):
             except Error as e:
                 return jsonify({"error": str(e)}), 500
         else:
-            idx = next((i for i, c in enumerate(mock_db['customers']) if c['customer_id'] == id), -1)
+            idx = next((i for i, c in enumerate(mock_db['customers']) if c['license_number'] == license_number), -1)
             if idx == -1:
                 return jsonify({"error": "Customer not found"}), 404
             mock_db['customers'].pop(idx)
-            # Cascade delete mock bookings
-            mock_db['bookings'] = [b for b in mock_db['bookings'] if b['customer_id'] != id]
+            # Cascade delete mock bookings by customer_license
+            mock_db['bookings'] = [b for b in mock_db['bookings'] if b.get('customer_license') != license_number]
             return jsonify({"message": "Customer deleted successfully (Mock Mode)!"})
 
 # ----------------- VEHICLES -----------------
@@ -495,7 +513,7 @@ def manage_vehicles():
     if request.method == 'GET':
         if conn:
             try:
-                cursor = conn.cursor(dictionary=True)
+                cursor = conn.cursor(dictionary=True, buffered=True)
                 cursor.execute("SELECT * FROM Vehicle")
                 records = cursor.fetchall()
                 cursor.close()
@@ -518,7 +536,7 @@ def manage_vehicles():
             
         if conn:
             try:
-                cursor = conn.cursor()
+                cursor = conn.cursor(buffered=True)
                 cursor.execute(
                     "INSERT INTO Vehicle (model, type, rental_price_per_day, status) VALUES (%s, %s, %s, %s)",
                     (model, vtype, rental_price, status)
@@ -550,7 +568,7 @@ def detail_vehicle(id):
         
         if conn:
             try:
-                cursor = conn.cursor()
+                cursor = conn.cursor(buffered=True)
                 cursor.execute(
                     "UPDATE Vehicle SET model = %s, type = %s, rental_price_per_day = %s, status = %s WHERE vehicle_id = %s",
                     (model, vtype, rental_price, status, id)
@@ -601,13 +619,23 @@ def manage_bookings():
     if request.method == 'GET':
         if conn:
             try:
-                cursor = conn.cursor(dictionary=True)
-                cursor.execute("""
-                    SELECT b.*, c.name AS customer_name, v.model AS vehicle_model 
-                    FROM Booking b 
-                    JOIN Customer c ON b.customer_id = c.customer_id 
-                    JOIN Vehicle v ON b.vehicle_id = v.vehicle_id
-                """)
+                cursor = conn.cursor(dictionary=True, buffered=True)
+                cursor.execute("SHOW COLUMNS FROM Booking LIKE 'customer_license'")
+                has_license_col = cursor.fetchone() is not None
+                if has_license_col:
+                    cursor.execute("""
+                        SELECT b.*, c.name AS customer_name, c.license_number AS customer_license, v.model AS vehicle_model 
+                        FROM Booking b 
+                        JOIN Customer c ON b.customer_license = c.license_number 
+                        JOIN Vehicle v ON b.vehicle_id = v.vehicle_id
+                    """)
+                else:
+                    cursor.execute("""
+                        SELECT b.*, c.name AS customer_name, c.license_number AS customer_license, v.model AS vehicle_model 
+                        FROM Booking b 
+                        JOIN Customer c ON b.customer_id = c.customer_id 
+                        JOIN Vehicle v ON b.vehicle_id = v.vehicle_id
+                    """)
                 records = cursor.fetchall()
                 cursor.close()
                 conn.close()
@@ -617,7 +645,7 @@ def manage_bookings():
         else:
             results = []
             for b in mock_db['bookings']:
-                c = next((cust for cust in mock_db['customers'] if cust['customer_id'] == b['customer_id']), None)
+                c = next((cust for cust in mock_db['customers'] if cust['license_number'] == b.get('customer_license')), None)
                 v = next((veh for veh in mock_db['vehicles'] if veh['vehicle_id'] == b['vehicle_id']), None)
                 results.append({
                     **b,
@@ -628,7 +656,7 @@ def manage_bookings():
             
     elif request.method == 'POST':
         data = request.json
-        customer_id = data.get('customer_id')
+        customer_license = data.get('customer_license')
         vehicle_id = data.get('vehicle_id')
         booking_date = data.get('booking_date', datetime.today().strftime('%Y-%m-%d'))
         
@@ -636,29 +664,56 @@ def manage_bookings():
         start_date = data.get('start_date')
         end_date = data.get('end_date')
         
-        if not customer_id or not vehicle_id:
-            return jsonify({"error": "Missing customer_id or vehicle_id"}), 400
+        if not customer_license or not vehicle_id:
+            return jsonify({"error": "Missing customer_license or vehicle_id"}), 400
+        
+        # Server-side date validation: start >= today, end > start
+        if not start_date or not end_date:
+            return jsonify({"error": "Both start_date and end_date are required!"}), 400
+        try:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+            today_dt = date.today()
+            if start_dt < today_dt:
+                return jsonify({"error": "Start date cannot be before today!"}), 400
+            if end_dt <= start_dt:
+                return jsonify({"error": "End date must be strictly greater than the start date!"}), 400
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Expected YYYY-MM-DD"}), 400
             
         if conn:
             try:
-                cursor = conn.cursor()
+                cursor = conn.cursor(buffered=True, dictionary=True)
                 
-                # Check transaction triggers (handled automatically by MySQL triggers, but we run in a transaction)
-                # Inserting a Booking will trigger:
-                # 1. BEFORE: Prevent if Maintenance (raises 45000 state)
-                # 2. AFTER: Update Vehicle status to 'Rented'
-                cursor.execute(
-                    "INSERT INTO Booking (customer_id, vehicle_id, booking_date) VALUES (%s, %s, %s)",
-                    (customer_id, vehicle_id, booking_date)
-                )
+                # Check whether Booking table uses customer_license or customer_id
+                cursor.execute("SHOW COLUMNS FROM Booking LIKE 'customer_license'")
+                has_license_col = cursor.fetchone() is not None
+                
+                if has_license_col:
+                    cursor.execute(
+                        "INSERT INTO Booking (customer_license, vehicle_id, booking_date) VALUES (%s, %s, %s)",
+                        (customer_license, vehicle_id, booking_date)
+                    )
+                else:
+                    # Look up customer_id using customer_license
+                    cursor.execute("SELECT customer_id FROM Customer WHERE license_number = %s", (customer_license,))
+                    crow = cursor.fetchone()
+                    if not crow:
+                        cursor.close()
+                        conn.close()
+                        return jsonify({"error": f"Customer with license '{customer_license}' not found!"}), 404
+                    cust_id = crow['customer_id']
+                    cursor.execute(
+                        "INSERT INTO Booking (customer_id, vehicle_id, booking_date) VALUES (%s, %s, %s)",
+                        (cust_id, vehicle_id, booking_date)
+                    )
                 booking_id = cursor.lastrowid
                 
-                # Also insert Rental record if date range is provided
-                if start_date and end_date:
-                    cursor.execute(
-                        "INSERT INTO Rental (booking_id, start_date, end_date, total_amount) VALUES (%s, %s, %s, 0.00)",
-                        (booking_id, start_date, end_date)
-                    )
+                # Also insert Rental record with validated date range
+                cursor.execute(
+                    "INSERT INTO Rental (booking_id, start_date, end_date, total_amount) VALUES (%s, %s, %s, 0.00)",
+                    (booking_id, start_date, end_date)
+                )
                 
                 conn.commit()
                 cursor.close()
@@ -679,7 +734,7 @@ def manage_bookings():
             new_booking_id = max([b['booking_id'] for b in mock_db['bookings']], default=0) + 1
             mock_db['bookings'].append({
                 "booking_id": new_booking_id,
-                "customer_id": int(customer_id),
+                "customer_license": customer_license,
                 "vehicle_id": int(vehicle_id),
                 "booking_date": booking_date
             })
@@ -688,19 +743,61 @@ def manage_bookings():
             veh['status'] = 'Rented'
             
             # Create corresponding Rental automatically
-            if start_date and end_date:
-                new_rental_id = max([r['rental_id'] for r in mock_db['rentals']], default=0) + 1
-                mock_db['rentals'].append({
-                    "rental_id": new_rental_id,
-                    "booking_id": new_booking_id,
-                    "start_date": start_date,
-                    "end_date": end_date,
-                    "total_amount": 0.00
-                })
+            new_rental_id = max([r['rental_id'] for r in mock_db['rentals']], default=0) + 1
+            mock_db['rentals'].append({
+                "rental_id": new_rental_id,
+                "booking_id": new_booking_id,
+                "start_date": start_date,
+                "end_date": end_date,
+                "total_amount": 0.00
+            })
                 
             return jsonify({"message": "Booking successful (Mock Mode)! Vehicle status updated to 'Rented' by mock trigger.", "booking_id": new_booking_id}), 201
 
+@app.route('/api/bookings/<int:id>', methods=['DELETE'])
+def cancel_booking(id):
+    global mock_db
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor(buffered=True)
+            # Find vehicle_id for this booking to set it back to 'Available'
+            cursor.execute("SELECT vehicle_id FROM Booking WHERE booking_id = %s", (id,))
+            row = cursor.fetchone()
+            vehicle_id = row[0] if row else None
+            
+            # Delete booking (cascades to Rental and Payment due to foreign keys)
+            cursor.execute("DELETE FROM Booking WHERE booking_id = %s", (id,))
+            
+            if vehicle_id:
+                # Update vehicle status back to 'Available'
+                cursor.execute("UPDATE Vehicle SET status = 'Available' WHERE vehicle_id = %s", (vehicle_id,))
+                
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return jsonify({"message": "Booking cancelled and vehicle released successfully!"})
+        except Error as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        idx = next((i for i, b in enumerate(mock_db['bookings']) if b['booking_id'] == id), -1)
+        if idx == -1:
+            return jsonify({"error": "Booking not found"}), 404
+        booking = mock_db['bookings'].pop(idx)
+        
+        # Release vehicle
+        veh = next((v for v in mock_db['vehicles'] if v['vehicle_id'] == booking['vehicle_id']), None)
+        if veh:
+            veh['status'] = 'Available'
+            
+        # Cascaded delete mock rentals and payments
+        rental_ids = [r['rental_id'] for r in mock_db['rentals'] if r['booking_id'] == id]
+        mock_db['rentals'] = [r for r in mock_db['rentals'] if r['booking_id'] != id]
+        mock_db['payments'] = [p for p in mock_db['payments'] if p['rental_id'] not in rental_ids]
+        return jsonify({"message": "Booking cancelled and vehicle released (Mock Mode)!"})
+
 # ----------------- RENTALS & PROCEDURES -----------------
+
 @app.route('/api/rentals', methods=['GET'])
 def get_rentals():
     global mock_db
@@ -725,7 +822,7 @@ def get_rentals():
         results = []
         for r in mock_db['rentals']:
             bk = next((b for b in mock_db['bookings'] if b['booking_id'] == r['booking_id']), None)
-            c = next((cust for cust in mock_db['customers'] if cust['customer_id'] == bk['customer_id']), None) if bk else None
+            c = next((cust for cust in mock_db['customers'] if cust['license_number'] == bk.get('customer_license')), None) if bk else None
             v = next((veh for veh in mock_db['vehicles'] if veh['vehicle_id'] == bk['vehicle_id']), None) if bk else None
             results.append({
                 **r,
@@ -743,29 +840,52 @@ def run_procedure_calculate():
     
     if not rental_id:
         return jsonify({"error": "Missing rental_id"}), 400
+    if is_mock_mode:
+        pass
         
     conn = get_db_connection()
     if conn:
         try:
-            cursor = conn.cursor()
+            cursor = conn.cursor(buffered=True)
             # Call procedure CalculateRentalCharge
             # Syntax: CALL CalculateRentalCharge(rental_id, @out_total); SELECT @out_total;
             cursor.execute("SET @out_total = 0.00;")
-            cursor.execute(f"CALL CalculateRentalCharge({rental_id}, @out_total);")
-            cursor.execute("SELECT @out_total AS total_amount;")
-            result = cursor.fetchone()
-            conn.commit()
-            cursor.close()
-            conn.close()
+            cursor.execute("CALL CalculateRentalCharge(%s,@out_total);",(int (rental_id),))
             
-            total_amt = result[0] if result else 0.00
+            # Consume any results/messages produced by CALL statement to clear the cursor
+            try:
+                for result in cursor.stored_results():
+                    result.fetchall()
+            except Exception:
+                pass
+            
+            cursor.close()
+            
+            # Create a new cursor to read the OUT variable value from the same connection
+            cursor2 = conn.cursor(buffered=True)
+            cursor2.execute("SELECT @out_total;")
+            row = cursor2.fetchone()
+            if row and row[0] is not None:
+                total_amt = row[0]
+            else:
+                total_amt = 0.00    
+            cursor2.close()
+           
+            conn.commit()
+            conn.close()
             return jsonify({
-                "message": f"Procedure CalculateRentalCharge completed successfully!",
+                "message": "Procedure CalculateRentalCharge completed successfully!",
                 "rental_id": rental_id,
-                "total_amount": float(total_amt)
+                "total_amount": float(total_amt),
+                "total_charge": float(total_amt)
             })
         except Error as e:
-            return jsonify({"error": str(e)}), 500
+            if 'conn' in locals() and conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+            return jsonify({"error":f"Database error:{str(e)}"}), 500
     else:
         # Mock calculation
         rental = next((r for r in mock_db['rentals'] if r['rental_id'] == int(rental_id)), None)
@@ -774,34 +894,55 @@ def run_procedure_calculate():
             
         bk = next((b for b in mock_db['bookings'] if b['booking_id'] == rental['booking_id']), None)
         veh = next((v for v in mock_db['vehicles'] if v['vehicle_id'] == bk['vehicle_id']), None) if bk else None
-        
         if not veh:
             return jsonify({"error": "Associated vehicle not found for this rental booking"}), 400
             
         try:
-            d1 = datetime.strptime(rental['start_date'], '%Y-%m-%d')
-            d2 = datetime.strptime(rental['end_date'], '%Y-%m-%d')
-            days = max((d2 - d1).days, 1)
+
+            if rental.get('start_date')and rental.get('end_date'):
+                d1 = datetime.strptime(rental['start_date'], '%Y-%m-%d')
+                d2 = datetime.strptime(rental['end_date'], '%Y-%m-%d')
+                duration= (d2 - d1).days
+            else:
+                duration=5    
+            if duration<=0:
+                duration=1
         except Exception:
-            days = 1
+            duration= 5
             
-        calculated_amt = float(veh['rental_price_per_day']) * days
-        rental['total_amount'] = calculated_amt
+        daily_rate = float(veh['rental_price_per_day']) if (veh and 'rental_price_per_day'in veh)else 50.00
+        total_amt = duration*daily_rate
         return jsonify({
-            "message": "Procedure CalculateRentalCharge completed successfully (Mock Mode)!",
-            "rental_id": rental_id,
-            "total_amount": calculated_amt
+            "success": True,
+            "message": "Executed in mock mode successfully",
+            "total_amount": float(total_amt),
+            "total_charge": float(total_amt)
         })
 
+    
 # Execute Procedure 2: GetVehicleAvailabilityReport
 @app.route('/api/procedures/availability-report', methods=['GET'])
 def run_procedure_report():
+    global mock_db
+    if is_mock_mode:
+        # Return an array of status counts even in mock mode
+        counts = {}
+        for v in mock_db['vehicles']:
+            status_key = v.get('status', 'Available')
+            counts[status_key] = counts.get(status_key, 0) + 1
+        records = [{'status': k, 'vehicle_count': v} for k, v in counts.items()]
+        return jsonify(records)
     conn = get_db_connection()
     if conn:
         try:
-            cursor = conn.cursor(dictionary=True)
+            cursor = conn.cursor(dictionary=True,buffered=True)
             cursor.execute("CALL GetVehicleAvailabilityReport()")
             records = cursor.fetchall()
+            try:
+                for result in cursor.stored_results():
+                    result.fetchall()
+            except Exception:
+                pass
             cursor.close()
             conn.close()
             return jsonify(records)
@@ -811,7 +952,8 @@ def run_procedure_report():
         # Mock aggregation
         counts = {}
         for v in mock_db['vehicles']:
-            counts[v['status']] = counts.get(v['status'], 0) + 1
+            status_key= v.get('status', 'Available')
+            counts[status_key]= counts.get(status_key, 0) + 1
         records = [{'status': k, 'vehicle_count': v} for k, v in counts.items()]
         return jsonify(records)
 
@@ -844,7 +986,7 @@ def manage_maintenances():
     if request.method == 'GET':
         if conn:
             try:
-                cursor = conn.cursor(dictionary=True)
+                cursor = conn.cursor(dictionary=True,buffered=True)
                 cursor.execute("""
                     SELECT m.*, v.model AS vehicle_model 
                     FROM Maintenance m
@@ -875,7 +1017,7 @@ def manage_maintenances():
         
         if conn:
             try:
-                cursor = conn.cursor()
+                cursor = conn.cursor(buffered=True)
                 cursor.execute(
                     "INSERT INTO Maintenance (vehicle_id, description, maintenance_date, status) VALUES (%s, %s, %s, %s)",
                     (vehicle_id, description, m_date, status)

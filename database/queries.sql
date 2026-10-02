@@ -76,8 +76,7 @@ WHERE rental_price_per_day > (
 );
 
 -- 8. Retrieve customers who rented more vehicles than a specific customer (Correlated Subquery).
--- Purpose: Identify customers who have rented more vehicles than a specific baseline customer (e.g., customer_id = 2, who has 4 bookings in seed data).
--- In this query, the subquery uses c1.customer_id from the outer select.
+-- Purpose: Identify customers who have rented more vehicles than a specific baseline customer (e.g., customer_id = 2).
 SELECT 
     c1.customer_id, 
     c1.name, 
