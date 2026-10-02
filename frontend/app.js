@@ -4,7 +4,7 @@
    DBMS Project - ad034
    ========================================================================== */
 
-const API_BASE = 'http://127.0.0.1:5000/api';
+const API_BASE = window.location.port === '8000' ? 'http://127.0.0.1:5000/api' : '/api';
 
 // Global State
 let customers = [];

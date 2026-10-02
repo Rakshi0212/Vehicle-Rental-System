@@ -10,11 +10,11 @@ CORS(app)
 
 # Database config state
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'RK!02006',  # Configured user password
-    'database': 'vehicle_rental_system',
-    'port': 3306
+    'host': os.environ.get('MYSQL_HOST', 'localhost'),
+    'user': os.environ.get('MYSQL_USER', 'root'),
+    'password': os.environ.get('MYSQL_PASSWORD', 'RK!02006'),
+    'database': os.environ.get('MYSQL_DATABASE', 'vehicle_rental_system'),
+    'port': int(os.environ.get('MYSQL_PORT', 3306))
 }
 
 is_mock_mode = False
@@ -1093,6 +1093,7 @@ def manage_payments():
             return jsonify({"message": "Payment logged successfully (Mock Mode)!"}), 201
 
 if __name__ == '__main__':
-    # Start server on local port 5000
-    print("Flask backend server running on http://127.0.0.1:5000")
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() in ('true', '1')
+    print(f"Flask backend server running on http://0.0.0.0:{port}")
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
